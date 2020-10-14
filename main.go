@@ -6,6 +6,11 @@ import (
 	"log"
 )
 
+type Manufacturer struct {
+	ManufacturerId int `json:"manufacturer_id"`
+	Name           string
+}
+
 func main() {
 
 	conf, _ := libs.LoadDatabaseConfiguration()
@@ -14,23 +19,20 @@ func main() {
 
 	defer db.Close()
 
+	//vendors := map[string]Manufacturer{}
 	res, _ := libs.FetchResult(libs.FetchTypeVendor, 1)
-
 	for _, v := range res.Response.Vendors {
-		r := struct {
-			ManufacturerId int `json:"manufacturer_id"`
-			Name           string
-		}{Name: v.Name}
+		r := Manufacturer{Name: v.Name}
 		q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
 		if q.RecordNotFound() {
 			db.SQL().Table("oc_manufacturer").Save(r)
 			resDB2 := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
 			log.Println(r.ManufacturerId)
 			if resDB2.Error == nil && r.ManufacturerId > 0 {
-				r2 := struct {
-					ManufacturerId int `json:"manufacturer_id"`
-				}{ManufacturerId: r.ManufacturerId}
-				db.SQL().Table("oc_manufacturer_to_store").Save(&r2)
+				//r2 := struct {
+				//	ManufacturerId int `json:"manufacturer_id"`
+				//}{ManufacturerId: r.ManufacturerId}
+				db.SQL().Table("oc_manufacturer_to_store").Omit("name").Save(&r)
 			}
 		}
 	}
