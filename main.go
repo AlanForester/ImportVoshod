@@ -25,6 +25,7 @@ type CategoryDescription struct {
 	CategoryID uint   `json:"category_id"`
 	LanguageId int    `json:"language_id"`
 	Name       string `json:"name"`
+	Top        int    `json:"top"`
 }
 
 type Product struct {
@@ -70,7 +71,7 @@ func main() {
 	resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
 	// Проверяем существует ли категория имя
 	for _, c := range resCat.Response.Catalogs {
-		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
+		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1, Top: 1}
 		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
 		if q.RecordNotFound() { // Не существует
 			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID])}
