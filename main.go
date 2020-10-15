@@ -92,7 +92,7 @@ func main() {
 	//		}
 	//	}
 	//}
-
+	//
 	categories := make(map[string]uint)
 	//resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
 	//// Проверяем существует ли категория имя
@@ -119,9 +119,16 @@ func main() {
 	//	categories[c.ID] = catDescr.CategoryID
 	//}
 
-	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 1)
+	outCh := make(chan *libs.Item, 0)
+
+	go libs.FetchResult(libs.FetchTypeItems, 0, outCh)
+
 	// Проверяем существует ли категория имя
-	for _, p := range resItems.Response.Items {
+	for p := range outCh {
+		if p == nil {
+			break
+		}
+
 		brand := uint(0)
 		//cat := categories[p.CatalogID].CategoryID
 		prod := Product{ManufacturerId: brand, Status: 1, Model: p.Name, Price: p.Price, Quantity: p.Count, StockStatusId: 5}
@@ -156,6 +163,8 @@ func main() {
 			}
 		}
 	}
+
+	outCh <- nil
 	//for _, v := range res.Response.Vendors {
 	//	db.SQL().Create(map[string]interface{}{
 	//		"name": v.Name,

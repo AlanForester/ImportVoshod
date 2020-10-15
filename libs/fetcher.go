@@ -44,29 +44,36 @@ type Result struct {
 			ParentID string `json:"va_parent_id"`
 			Name     string `json:"name"`
 		} `json:"catalogs"`
-		Items []struct {
-			Images     []string `json:"images"`
-			Code       string   `json:"p_code"`
-			Mog        string   `json:"mog"`
-			OEMNum     string   `json:"oem_num"`
-			OEMBrand   string   `json:"oem_brand"`
-			Name       string   `json:"name"`
-			Shipment   int      `json:"shipment"`
-			Delivery   int      `json:"delivery"`
-			Department string   `json:"department"`
-			Count      int      `json:"count"`
-			CountChel  int      `json:"count_chel"`
-			CountEkb   int      `json:"count_ekb"`
-			UnitCode   int      `json:"unit_code"`
-			Unit       string   `json:"unit"`
-			Price      float32  `json:"price"`
-			CatalogID  string   `json:"va_catalog_id"`
-			ItemID     string   `json:"va_item_id"`
-		} `json:"items"`
+		Items []Item `json:"items"`
 	} `json:"response"`
 }
 
-func FetchResult(tp FetchType, page int) (result Result, err error) {
+type Item struct {
+	Images     []string `json:"images"`
+	Code       string   `json:"p_code"`
+	Mog        string   `json:"mog"`
+	OEMNum     string   `json:"oem_num"`
+	OEMBrand   string   `json:"oem_brand"`
+	Name       string   `json:"name"`
+	Shipment   int      `json:"shipment"`
+	Delivery   int      `json:"delivery"`
+	Department string   `json:"department"`
+	Count      int      `json:"count"`
+	CountChel  int      `json:"count_chel"`
+	CountEkb   int      `json:"count_ekb"`
+	UnitCode   int      `json:"unit_code"`
+	Unit       string   `json:"unit"`
+	Price      float32  `json:"price"`
+	CatalogID  string   `json:"va_catalog_id"`
+	ItemID     string   `json:"va_item_id"`
+}
+
+func FetchResult(tp FetchType, page int, items ...chan *Item) (result Result, err error) {
+	var ch chan *Item
+	if len(items) > 0 {
+		ch = items[0]
+	}
+
 	url := "https://api.v-avto.ru/v1/"
 
 	switch tp {
@@ -110,6 +117,13 @@ func FetchResult(tp FetchType, page int) (result Result, err error) {
 						result.Response.Catalogs = append(result.Response.Catalogs, res.Response.Catalogs...)
 					case FetchTypeItems:
 						result.Response.Items = append(result.Response.Items, res.Response.Items...)
+						if ch != nil {
+							go func(itm []Item) {
+								for _, p := range res.Response.Items {
+									ch <- &p
+								}
+							}(res.Response.Items)
+						}
 					}
 				}
 
@@ -122,6 +136,7 @@ func FetchResult(tp FetchType, page int) (result Result, err error) {
 		}
 
 		wg.Wait()
+
 	} else {
 		reqUrl := fmt.Sprintf("%s?key=%s&page=%d", url, key, page)
 		//log.Printf("Req: %s",reqUrl)
