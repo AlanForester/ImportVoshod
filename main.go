@@ -17,6 +17,7 @@ type Category struct {
 	ParentID   uint `json:"parent_id"`
 	Status     int
 	Top        int `json:"top"`
+	Column     int `json:"column"`
 }
 
 func (c Category) TableName() string {
@@ -75,7 +76,7 @@ func main() {
 		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
 		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
 		if q.RecordNotFound() { // Не существует
-			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1}
+			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1, Column: 0}
 			catSv := db.SQL().Create(&cat)
 			if catSv.Error == nil {
 				catDescr.CategoryID = cat.CategoryID
