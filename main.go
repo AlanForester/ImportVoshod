@@ -3,6 +3,7 @@ package main
 import (
 	"VoshodFetcher/db"
 	"VoshodFetcher/libs"
+	"log"
 )
 
 type Manufacturer struct {
@@ -65,31 +66,31 @@ func main() {
 	//	}
 	//}
 
-	categories := make(map[string]Category)
-	//resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
-	//// Проверяем существует ли категория имя
-	//for _, c := range resCat.Response.Catalogs {
-	//	catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
-	//	q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
-	//	if q.RecordNotFound() { // Не существует
-	//		cat := Category{Status: 1, ParentID: uint(categories[c.ParentID].CategoryID)}
-	//		catSv := db.SQL().Create(&cat)
-	//		if catSv.Error == nil {
-	//			catDescr.CategoryID = cat.CategoryID
-	//			db.SQL().Table("oc_category_description").Save(&catDescr)
-	//
-	//			c2s := struct {
-	//				CategoryID uint `json:"category_id"`
-	//				StoreId    int  `json:"store_id"`
-	//			}{
-	//				CategoryID: cat.CategoryID,
-	//				StoreId:    0,
-	//			}
-	//			db.SQL().Table("oc_category_to_store").Save(&c2s)
-	//			categories[c.ID] = cat
-	//		}
-	//	}
-	//}
+	categories := make(map[string]uint)
+	resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
+	// Проверяем существует ли категория имя
+	for _, c := range resCat.Response.Catalogs {
+		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
+		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
+		if q.RecordNotFound() { // Не существует
+			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID])}
+			catSv := db.SQL().Create(&cat)
+			if catSv.Error == nil {
+				catDescr.CategoryID = cat.CategoryID
+				db.SQL().Table("oc_category_description").Save(&catDescr)
+
+				c2s := struct {
+					CategoryID uint `json:"category_id"`
+					StoreId    int  `json:"store_id"`
+				}{
+					CategoryID: cat.CategoryID,
+					StoreId:    0,
+				}
+				db.SQL().Table("oc_category_to_store").Save(&c2s)
+			}
+		}
+		categories[c.ID] = catDescr.CategoryID
+	}
 
 	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 1)
 	// Проверяем существует ли категория имя
@@ -100,9 +101,10 @@ func main() {
 		q := db.SQL().Table("oc_product").First(&prod, "model = ? AND manufacturer_id = ?", p.Name, 0)
 		if q.RecordNotFound() { // Не существует
 			ProdSv := db.SQL().Create(&prod)
+			log.Println(p.CatalogID)
 			if ProdSv.Error == nil && prod.ProductId > 0 {
 				if p.CatalogID != "" {
-					cat := categories[p.CatalogID].CategoryID
+					cat := categories[p.CatalogID]
 					if cat != 0 {
 						p2c := struct {
 							CategoryID uint `json:"category_id"`
@@ -111,17 +113,17 @@ func main() {
 							CategoryID: cat,
 							ProductId:  prod.ProductId,
 						}
-						db.SQL().Table("oc_product_to_category").Save(&p2c)
-
-						p2s := struct {
-							CategoryID uint `json:"category_id"`
-							StoreId    int  `json:"store_id"`
-						}{
-							CategoryID: cat,
-							StoreId:    0,
-						}
-						db.SQL().Table("oc_product_to_store").Save(&p2s)
+						db.SQL().Table("oc_product_to_category").Create(&p2c)
 					}
+
+					p2s := struct {
+						ProductId uint `json:"product_id"`
+						StoreId   int  `json:"store_id"`
+					}{
+						ProductId: prod.ProductId,
+						StoreId:   0,
+					}
+					db.SQL().Table("oc_product_to_store").Create(&p2s)
 				}
 
 			}
