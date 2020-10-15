@@ -48,6 +48,14 @@ type Product struct {
 	Location       string  `json:"location"`
 	ManufacturerId uint    `json:"manufacturer_id"`
 	Model          string  `json:"model"`
+	Sku            string
+	Upc            string
+	Ean            string
+	Jan            string
+	Isbn           string
+	Mpn            string
+	Shipping       int
+	Points         int
 }
 
 func (p Product) TableName() string {
@@ -62,47 +70,47 @@ func main() {
 
 	defer db.Close()
 
-	//resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
-	//for _, v := range resVen.Response.Vendors {
-	//	r := Manufacturer{Name: v.Name, SortOrder: 0}
-	//	q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
-	//	if q.RecordNotFound() {
-	//		db.SQL().Table("oc_manufacturer").Save(r)
-	//		resDB2 := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
-	//		log.Println(r.ManufacturerId)
-	//		if resDB2.Error == nil && r.ManufacturerId > 0 {
-	//			db.SQL().Table("oc_manufacturer_to_store").Omit("name").Save(&r)
-	//		}
-	//	}
-	//}
-	//
-	categories := make(map[string]uint)
-	//resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
-	//// Проверяем существует ли категория имя
-	//for _, c := range resCat.Response.Catalogs {
-	//	catDescr := CategoryDescription{Name: c.Name, LanguageId: 1, Description: "", MetaDescription: "", MetaTitle: "", MetaKeyword: ""}
-	//	q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
-	//	if q.RecordNotFound() { // Не существует
-	//		cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1, Column: 1, DateAdded: time.Time{}, DateModified: time.Time{}}
-	//		catSv := db.SQL().Create(&cat)
-	//		if catSv.Error == nil {
-	//			catDescr.CategoryID = cat.CategoryID
-	//			db.SQL().Table("oc_category_description").Save(&catDescr)
-	//
-	//			c2s := struct {
-	//				CategoryID uint `json:"category_id"`
-	//				StoreId    int  `json:"store_id"`
-	//			}{
-	//				CategoryID: cat.CategoryID,
-	//				StoreId:    0,
-	//			}
-	//			db.SQL().Table("oc_category_to_store").Save(&c2s)
-	//		}
-	//	}
-	//	categories[c.ID] = catDescr.CategoryID
-	//}
+	resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
+	for _, v := range resVen.Response.Vendors {
+		r := Manufacturer{Name: v.Name, SortOrder: 0}
+		q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
+		if q.RecordNotFound() {
+			db.SQL().Table("oc_manufacturer").Save(r)
+			resDB2 := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
+			log.Println(r.ManufacturerId)
+			if resDB2.Error == nil && r.ManufacturerId > 0 {
+				db.SQL().Table("oc_manufacturer_to_store").Omit("name").Save(&r)
+			}
+		}
+	}
 
-	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 1)
+	categories := make(map[string]uint)
+	resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
+	// Проверяем существует ли категория имя
+	for _, c := range resCat.Response.Catalogs {
+		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1, Description: "", MetaDescription: "", MetaTitle: "", MetaKeyword: ""}
+		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
+		if q.RecordNotFound() { // Не существует
+			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1, Column: 1, DateAdded: time.Time{}, DateModified: time.Time{}}
+			catSv := db.SQL().Create(&cat)
+			if catSv.Error == nil {
+				catDescr.CategoryID = cat.CategoryID
+				db.SQL().Table("oc_category_description").Save(&catDescr)
+
+				c2s := struct {
+					CategoryID uint `json:"category_id"`
+					StoreId    int  `json:"store_id"`
+				}{
+					CategoryID: cat.CategoryID,
+					StoreId:    0,
+				}
+				db.SQL().Table("oc_category_to_store").Save(&c2s)
+			}
+		}
+		categories[c.ID] = catDescr.CategoryID
+	}
+
+	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 0)
 	// Проверяем существует ли категория имя
 	for _, p := range resItems.Response.Items {
 		brand := uint(0)
