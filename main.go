@@ -15,6 +15,7 @@ type Category struct {
 	CategoryID uint `gorm:"primary_key" json:"category_id"`
 	ParentID   uint `json:"parent_id"`
 	Status     int
+	Top        int `json:"top"`
 }
 
 func (c Category) TableName() string {
@@ -25,7 +26,6 @@ type CategoryDescription struct {
 	CategoryID uint   `json:"category_id"`
 	LanguageId int    `json:"language_id"`
 	Name       string `json:"name"`
-	Top        int    `json:"top"`
 }
 
 type Product struct {
@@ -71,10 +71,10 @@ func main() {
 	resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
 	// Проверяем существует ли категория имя
 	for _, c := range resCat.Response.Catalogs {
-		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1, Top: 1}
+		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
 		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
 		if q.RecordNotFound() { // Не существует
-			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID])}
+			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1}
 			catSv := db.SQL().Create(&cat)
 			if catSv.Error == nil {
 				catDescr.CategoryID = cat.CategoryID
