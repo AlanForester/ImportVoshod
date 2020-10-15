@@ -52,19 +52,19 @@ func main() {
 
 	defer db.Close()
 
-	//resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
-	//for _, v := range resVen.Response.Vendors {
-	//	r := Manufacturer{Name: v.Name}
-	//	q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
-	//	if q.RecordNotFound() {
-	//		db.SQL().Table("oc_manufacturer").Save(r)
-	//		resDB2 := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
-	//		log.Println(r.ManufacturerId)
-	//		if resDB2.Error == nil && r.ManufacturerId > 0 {
-	//			db.SQL().Table("oc_manufacturer_to_store").Omit("name").Save(&r)
-	//		}
-	//	}
-	//}
+	resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
+	for _, v := range resVen.Response.Vendors {
+		r := Manufacturer{Name: v.Name}
+		q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
+		if q.RecordNotFound() {
+			db.SQL().Table("oc_manufacturer").Save(r)
+			resDB2 := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
+			log.Println(r.ManufacturerId)
+			if resDB2.Error == nil && r.ManufacturerId > 0 {
+				db.SQL().Table("oc_manufacturer_to_store").Omit("name").Save(&r)
+			}
+		}
+	}
 
 	categories := make(map[string]uint)
 	resCat, _ := libs.FetchResult(libs.FetchTypeCatalogs, 0)
@@ -92,7 +92,7 @@ func main() {
 		categories[c.ID] = catDescr.CategoryID
 	}
 
-	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 1)
+	resItems, _ := libs.FetchResult(libs.FetchTypeItems, 0)
 	// Проверяем существует ли категория имя
 	for _, p := range resItems.Response.Items {
 		brand := uint(0)
