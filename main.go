@@ -67,6 +67,17 @@ type Product struct {
 	DateModified   time.Time `json:"date_modified"`
 }
 
+type ProductDescription struct {
+	ProductId       uint   `json:"product_id"`
+	LanguageId      int    `json:"language_id"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	MetaTitle       string `json:"meta_title"`
+	MetaDescription string `json:"meta_description"`
+	MetaKeyword     string `json:"meta_keyword"`
+	Tag             string
+}
+
 func (p Product) TableName() string {
 	return "oc_product"
 }
@@ -81,7 +92,7 @@ func main() {
 
 	resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
 	for _, v := range resVen.Response.Vendors {
-		r := Manufacturer{Name: v.Name, SortOrder: 0}
+		r := Manufacturer{Name: v.Name, SortOrder: 1}
 		q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
 		if q.RecordNotFound() {
 			db.SQL().Table("oc_manufacturer").Save(r)
@@ -137,6 +148,8 @@ func main() {
 			ProdSv := db.SQL().Create(&prod)
 			log.Println(p.CatalogID)
 			if ProdSv.Error == nil && prod.ProductId > 0 {
+				prodDescr := ProductDescription{ProductId: prod.ProductId, Name: p.Name, LanguageId: 1}
+				db.SQL().Table("oc_product_description").Create(&prodDescr)
 				if p.CatalogID != "" {
 					cat := categories[p.CatalogID]
 					if cat != 0 {
