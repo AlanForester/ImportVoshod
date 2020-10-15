@@ -174,6 +174,9 @@ func main() {
 				}
 
 			}
+		} else {
+			prod.Quantity = p.Count
+			db.SQL().Save(&prod)
 		}
 	}
 
