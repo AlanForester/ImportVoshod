@@ -7,6 +7,7 @@ import (
 )
 
 type Manufacturer struct {
+	SortOrder      int    `json:"sort_order"`
 	ManufacturerId uint   `json:"manufacturer_id"`
 	Name           string `json:"name"`
 }
@@ -55,7 +56,7 @@ func main() {
 
 	resVen, _ := libs.FetchResult(libs.FetchTypeVendor, 0)
 	for _, v := range resVen.Response.Vendors {
-		r := Manufacturer{Name: v.Name}
+		r := Manufacturer{Name: v.Name, SortOrder: 0}
 		q := db.SQL().Table("oc_manufacturer").First(&r, "name = ?", v.Name)
 		if q.RecordNotFound() {
 			db.SQL().Table("oc_manufacturer").Save(r)
