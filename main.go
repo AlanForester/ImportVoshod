@@ -56,6 +56,15 @@ type Product struct {
 	Mpn            string
 	Shipping       int
 	Points         int
+	TaxClassId     int
+	DateAvailable  time.Time
+	Weight         float32
+	WeightClassId  int
+	Height         float32
+	LengthClassId  int
+	Viewed         int
+	DateAdded      time.Time `json:"date_added"`
+	DateModified   time.Time `json:"date_modified"`
 }
 
 func (p Product) TableName() string {
