@@ -4,6 +4,7 @@ import (
 	"VoshodFetcher/db"
 	"VoshodFetcher/libs"
 	"log"
+	"time"
 )
 
 type Manufacturer struct {
@@ -13,11 +14,13 @@ type Manufacturer struct {
 }
 
 type Category struct {
-	CategoryID uint `gorm:"primary_key" json:"category_id"`
-	ParentID   uint `json:"parent_id"`
-	Status     int
-	Top        int `json:"top"`
-	Column     int `json:"column"`
+	CategoryID   uint `gorm:"primary_key" json:"category_id"`
+	ParentID     uint `json:"parent_id"`
+	Status       int
+	Top          int       `json:"top"`
+	Column       int       `json:"column"`
+	DateAdded    time.Time `json:"date_added"`
+	DateModified time.Time `json:"date_modified"`
 }
 
 func (c Category) TableName() string {
@@ -76,7 +79,7 @@ func main() {
 		catDescr := CategoryDescription{Name: c.Name, LanguageId: 1}
 		q := db.SQL().Table("oc_category_description").First(&catDescr, "name = ?", c.Name)
 		if q.RecordNotFound() { // Не существует
-			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1, Column: 0}
+			cat := Category{Status: 1, ParentID: uint(categories[c.ParentID]), Top: 1, Column: 1, DateAdded: time.Time{}, DateModified: time.Time{}}
 			catSv := db.SQL().Create(&cat)
 			if catSv.Error == nil {
 				catDescr.CategoryID = cat.CategoryID
