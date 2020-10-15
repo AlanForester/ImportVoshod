@@ -142,8 +142,8 @@ func main() {
 
 		brand := uint(0)
 		//cat := categories[p.CatalogID].CategoryID
-		prod := Product{ManufacturerId: brand, Status: 1, Model: p.Name, Price: p.Price, Quantity: p.Count, StockStatusId: 5}
-		q := db.SQL().Table("oc_product").First(&prod, "model = ? AND manufacturer_id = ?", p.Name, 0)
+		prod := Product{ManufacturerId: brand, Status: 1, Model: p.Mog, Price: p.Price, Quantity: p.Count, StockStatusId: 5}
+		q := db.SQL().Table("oc_product").First(&prod, "model = ? AND manufacturer_id = ?", p.Mog, 0)
 		if q.RecordNotFound() { // Не существует
 			ProdSv := db.SQL().Create(&prod)
 			log.Println(p.CatalogID)
